@@ -8,17 +8,21 @@ else (MSVC)
 	set(CMAKE_CXX_FLAGS "-std=c++11")
 endif (MSVC)
 
-option(SimpleNetworksTest "SimpleNetworkTest project is added" OFF)
+option(SimpleNetworkTest "SimpleNetworkTest project is added" OFF)
 
 # Source files.
 set(SOURCES_NETWORK
 	src/net/buffer.cpp
 	src/net/buffer.h
+	src/net/client.cpp
+	src/net/client.h
 	src/net/connection.cpp
 	src/net/connection.h
 	src/net/network.cpp
 	src/net/network.h
 	src/net/packet.h
+	src/net/server.cpp
+	src/net/server.h
 )
 
 set(SOURCES_NETWORK_TEST
@@ -28,6 +32,10 @@ set(SOURCES_NETWORK_TEST
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_net REQUIRED)
+if (CMAKE_COMPILER_IS_GNUCXX)
+	find_package(Threads REQUIRED) # Due to a bug, which forces the user to link to Threads when using #include <thread>.
+	set(CMAKE_CXX_FLAGS_DEBUG)
+endif (CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(
 	${SDL2_INCLUDE_DIRS}
@@ -36,7 +44,7 @@ include_directories(
 
 add_library(SimpleNetwork ${SOURCES_NETWORK})
 
-if (MwLibrary2Test)
+if (SimpleNetworkTest)
 	include_directories(src)
 	add_executable(SimpleNetworkTest ${SOURCES_NETWORK_TEST})
 
@@ -45,8 +53,9 @@ if (MwLibrary2Test)
 	endif (MSVC)
 
 	target_link_libraries(SimpleNetworkTest
-		Network
+		SimpleNetwork
 		${SDL2_LIBRARIES}
 		${SDL2_NET_LIBRARIES}
+		${CMAKE_THREAD_LIBS_INIT}
 	)
-endif (MwLibrary2Test)
+endif (SimpleNetworkTest)
