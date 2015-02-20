@@ -23,6 +23,10 @@ namespace net {
 
 		void stop();
 
+		bool isActive() const;
+
+		int getId() const;
+
 	private:
 		Buffer& buffer_;
 	};

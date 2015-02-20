@@ -7,7 +7,7 @@
 namespace net {
 
 	Client::Client(const std::shared_ptr<std::mutex>& mutex) : socketSet_(0), buffer_(mutex),
-        mutex_(mutex), active_(true) {
+        mutex_(mutex) {
 
 	}
 
@@ -21,9 +21,7 @@ namespace net {
 	}
 
     void Client::close() {
-        mutex_->lock();
-        active_ = false;
-        mutex_->unlock();
+		buffer_.setActive(false);
     }
 
 	void Client::run(int port, std::string ip) {
@@ -53,10 +51,8 @@ namespace net {
 
 				// Send data to the server.
 				sendData();
-
-				mutex_->lock();
-				active = active_;
-				mutex_->unlock();
+								
+				active = buffer_.isActive();
 				if (!active) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				}

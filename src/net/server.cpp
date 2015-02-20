@@ -67,6 +67,7 @@ namespace net {
 			active = active_;
 			acceptConnection = acceptConnection_;
 			mutex_->unlock();
+
 			if (!active) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
@@ -141,6 +142,7 @@ namespace net {
                         SDLNet_TCP_DelSocket(socketSet_, pair.first);
                         SDLNet_TCP_Close(pair.first); // Removed from set, then closed!
 					    clients_.erase(pair.first);
+						pair.second->stop();
 					    break; // Due, iterator invalid!
 					}
 				}

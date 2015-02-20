@@ -23,6 +23,7 @@ set(SOURCES_NETWORK
 	src/net/packet.h
 	src/net/server.cpp
 	src/net/server.h
+	src/net/connectionscontrol.h
 )
 
 set(SOURCES_NETWORK_TEST

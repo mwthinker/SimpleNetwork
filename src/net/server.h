@@ -2,6 +2,8 @@
 #define NET_SERVER_H
 
 #include "buffer.h"
+#include "connection.h"
+#include "connectionscontrol.h"
 
 #include <SDL_net.h>
 
@@ -16,20 +18,21 @@ namespace net {
 
     class Connection;
 
-    class Server {
+    class Server : public ConnectionsControl {
     public:
         Server(const std::shared_ptr<std::mutex>& mutex);
 
-        std::shared_ptr<Connection> pollConnection();
+		// Thread safe.
+		std::shared_ptr<Connection> pollConnection() override;
 
         // Thread safe. Closes the the thread as fast as it can.
-        void close();
+		void close() override;
 
         // Thread safe.
-        void setAcceptConnections(bool accept);
+		void setAcceptConnections(bool accept) override;
 
         // Thread safe.
-		bool isAcceptingConnections() const;
+		bool isAcceptingConnections() const override;
 
         // Should be run by a a other thread.
         void run(int port);

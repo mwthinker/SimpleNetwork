@@ -19,7 +19,15 @@ namespace net {
 	}
 
 	void Connection::stop() {
+		buffer_.setActive(false);
+	}
 
+	bool Connection::isActive() const {
+		return buffer_.isActive();
+	}
+
+	int Connection::getId() const {
+		return buffer_.getId();
 	}
 
 } // Namespace net.

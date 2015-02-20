@@ -2,7 +2,11 @@
 
 namespace net {
 
-	Buffer::Buffer(const std::shared_ptr<std::mutex>& mutex) : mutex_(mutex) {
+	int Buffer::lastId_ = 0;
+
+	Buffer::Buffer(const std::shared_ptr<std::mutex>& mutex) : mutex_(mutex),
+		active_(true), id_(++lastId_) {
+
 	}
 
 	bool Buffer::popReceiveBuffer(Packet& packet) {
@@ -46,6 +50,19 @@ namespace net {
 		}
 		mutex_->unlock();
 		return 0;
+	}
+
+	bool Buffer::isActive() const {
+		mutex_->lock();
+		bool active = active_;
+		mutex_->unlock();
+		return active;
+	}
+
+	void Buffer::setActive(bool active) {
+		mutex_->lock();
+		active_ = active;
+		mutex_->unlock();
 	}
 
 } // Namespace net.

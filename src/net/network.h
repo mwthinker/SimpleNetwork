@@ -17,9 +17,10 @@ namespace net {
     class Server;
     class Client;
     class Connection;
+	class ConnectionsControl;
 
 	enum Status {
-		ACTIVE, DISCONNECTING, NOT_ACTIVE
+		ACTIVE, NOT_ACTIVE
 	};
 
 	// This class works as a multi-user system. Should be used
@@ -28,6 +29,9 @@ namespace net {
 	public:
 		Network();
 		~Network();
+
+		Network(const Network&) = delete;
+		Network& operator=(const Network&) = delete;
 
 		// Start the connection to the server.
 		void startServer(int port);
@@ -47,8 +51,7 @@ namespace net {
 		Status getStatus() const;
 
 	private:
-		Server* server_;
-		Client* client_;
+		ConnectionsControl* connectionsControl_;
 
 		std::shared_ptr<std::mutex> mutex_;
 		std::thread thread_;

@@ -2,30 +2,38 @@
 #define NET_CLIENT_H
 
 #include "buffer.h"
+#include "connection.h"
+#include "connectionscontrol.h"
 
 #include <SDL_net.h>
 
 #include <mutex>
-#include <memory>
 #include <functional>
 #include <string>
 
 namespace net {
 
-    class Connection;
-
-    class Client {
+	class Client : public ConnectionsControl {
     public:
         Client(const std::shared_ptr<std::mutex>& mutex);
 
         // Thread safe.
-        std::shared_ptr<Connection> pollConnection();
+		std::shared_ptr<Connection> pollConnection() override;
+
+		// Thread safe.
+		inline void setAcceptConnections(bool accept) override {
+		}
+
+		// Thread safe.
+		inline bool isAcceptingConnections() const override {
+			return true;
+		}
 
         // Thread safe. Closes the the thread as fast as it can.
-        void close();
+		void close() override;
 
         // Should be run by a a other thread.
-        void run(int port, std::string ip);
+		void run(int port, std::string ip);
 
     private:
         void receiveData();
@@ -35,7 +43,6 @@ namespace net {
         SDLNet_SocketSet socketSet_;
         Buffer buffer_;
         TCPsocket socket_;
-        bool active_;
         std::shared_ptr<Connection> newConnection_;
         std::shared_ptr<Connection> connection_;
         std::shared_ptr<std::mutex> mutex_;
