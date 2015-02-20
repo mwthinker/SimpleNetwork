@@ -19,13 +19,19 @@ namespace net {
     class Server {
     public:
         Server(const std::shared_ptr<std::mutex>& mutex);
-        ~Server();
 
-        std::shared_ptr<Connection> pollNewConnections();
+        std::shared_ptr<Connection> pollConnection();
 
-        // Not thread safe. Closes the the thread as fast as it can.
+        // Thread safe. Closes the the thread as fast as it can.
         void close();
 
+        // Thread safe.
+        void setAcceptConnections(bool accept);
+
+        // Thread safe.
+		bool isAcceptingConnections() const;
+
+        // Should be run by a a other thread.
         void run(int port);
 
     private:
@@ -43,6 +49,7 @@ namespace net {
         Buffer buffer_;
         std::shared_ptr<std::mutex> mutex_;
         bool active_;
+        bool acceptConnection_;
     };
 
 } // Namespace net.

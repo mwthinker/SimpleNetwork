@@ -17,14 +17,14 @@ namespace net {
     class Client {
     public:
         Client(const std::shared_ptr<std::mutex>& mutex);
-        ~Client();
 
         // Thread safe.
-        std::shared_ptr<Connection> pollNewConnections();
+        std::shared_ptr<Connection> pollConnection();
 
-        // Not thread safe. Closes the the thread as fast as it can.
+        // Thread safe. Closes the the thread as fast as it can.
         void close();
 
+        // Should be run by a a other thread.
         void run(int port, std::string ip);
 
     private:

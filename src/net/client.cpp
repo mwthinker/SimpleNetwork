@@ -11,14 +11,7 @@ namespace net {
 
 	}
 
-	Client::~Client() {
-		active_ = false;
-		if (socketSet_ != nullptr) {
-			SDLNet_FreeSocketSet(socketSet_);
-		}
-	}
-
-	std::shared_ptr<Connection> Client::pollNewConnections() {
+	std::shared_ptr<Connection> Client::pollConnection() {
         if (newConnection_) {
             auto tmp = newConnection_;
             newConnection_ = nullptr;
@@ -28,7 +21,9 @@ namespace net {
 	}
 
     void Client::close() {
-        active_ = true;
+        mutex_->lock();
+        active_ = false;
+        mutex_->unlock();
     }
 
 	void Client::run(int port, std::string ip) {
@@ -39,7 +34,7 @@ namespace net {
 
 		socket_ = SDLNet_TCP_Open(&ip_);
 
-		if(!socket_) {
+		if(socket_ == 0) {
             printf("SDLNet_TCP_Open: %s\n", SDLNet_GetError());
             return;
         } else {
@@ -62,9 +57,19 @@ namespace net {
 				mutex_->lock();
 				active = active_;
 				mutex_->unlock();
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				if (!active) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				}
 			}
 		}
+		if (socket_ != 0) {
+            SDLNet_TCP_Close(socket_);
+		}
+		socket_ = 0;
+		if (socketSet_ != 0) {
+			SDLNet_FreeSocketSet(socketSet_);
+		}
+		socketSet_ = 0;
 	}
 
 	void Client::receiveData() {
@@ -75,17 +80,25 @@ namespace net {
 				int size = SDLNet_TCP_Recv(socket_, data.data(), sizeof(data));
 				if (size > 0) {
 					buffer_.addToReceiveBuffer(data, size);
-				}
+				} else { // Assume that the client was disconnected.
+                    SDLNet_TCP_DelSocket(socketSet_, socket_);
+                    SDLNet_TCP_Close(socket_); // Removed from set, then closed!
+                    socket_ = 0;
+                    close();
+                    break; // Due, iterator invalid!
+                }
 			}
 		}
 	}
 
 	void Client::sendData() {
-		std::array<char, Packet::MAX_SIZE> data;
-		int size = buffer_.removeFromSendBufferTo(data);
-		if (size > 0) {
-			SDLNet_TCP_Send(socket_, data.data(), size);
-		}
+	    if (socket_ != 0) {
+            std::array<char, Packet::MAX_SIZE> data;
+            int size = buffer_.removeFromSendBufferTo(data);
+            if (size > 0) {
+                SDLNet_TCP_Send(socket_, data.data(), size);
+            }
+	    }
 	}
 
 } // Namespace net.

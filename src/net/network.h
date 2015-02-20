@@ -37,7 +37,11 @@ namespace net {
 		// End all active connections.
 		void stop();
 
-		std::shared_ptr<Connection> pollNewConnections();
+		void setAcceptConnections(bool accept);
+
+		bool isAcceptingConnections() const;
+
+		std::shared_ptr<Connection> pollConnection();
 
 		// Return the current status for the network.
 		Status getStatus() const;

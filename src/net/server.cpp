@@ -6,18 +6,24 @@
 namespace net {
 
 	Server::Server(const std::shared_ptr<std::mutex>& mutex) : socketSet_(0), buffer_(mutex),
-        mutex_(mutex), active_(true) {
+        mutex_(mutex), active_(true), acceptConnection_(true) {
 
 	}
 
-	Server::~Server() {
-		active_ = false;
-		if (socketSet_ != nullptr) {
-			SDLNet_FreeSocketSet(socketSet_);
-		}
+	void Server::setAcceptConnections(bool accept) {
+	    mutex_->lock();
+	    acceptConnection_ = accept;
+	    mutex_->unlock();
 	}
 
-	std::shared_ptr<Connection> Server::pollNewConnections() {
+	bool Server::isAcceptingConnections() const {
+	    mutex_->lock();
+	    bool accept = acceptConnection_;
+	    mutex_->unlock();
+	    return accept;
+	}
+
+	std::shared_ptr<Connection> Server::pollConnection() {
         if (!newConnections_.empty()) {
             mutex_->lock();
             auto connection = newConnections_.front();
@@ -29,7 +35,9 @@ namespace net {
 	}
 
 	void Server::close() {
-        active_ = true;
+        mutex_->lock();
+        active_ = false;
+        mutex_->unlock();
     }
 
 	void Server::run(int port) {
@@ -39,8 +47,12 @@ namespace net {
 			socketSet_ = SDLNet_AllocSocketSet(8);
 		}
 
+        bool acceptConnection = true;
 		while (active) {
-			auto connection = handleNewConnection();
+            std::shared_ptr<Connection> connection;
+            if (acceptConnection) {
+                connection = handleNewConnection();
+            }
 
 			// Receive data from sockets.
 			receiveData();
@@ -53,9 +65,28 @@ namespace net {
                 newConnections_.push(connection);
 			}
 			active = active_;
+			acceptConnection = acceptConnection_;
 			mutex_->unlock();
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			if (!active) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			}
 		}
+
+		for (auto& pair : clients_) {
+            SDLNet_TCP_DelSocket(socketSet_, pair.first);
+            SDLNet_TCP_Close(pair.first);
+		}
+		clients_.clear();
+
+		if (socketSet_ != nullptr) {
+			SDLNet_FreeSocketSet(socketSet_);
+		}
+		socketSet_ = 0;
+
+		if (listenSocket_ != 0) {
+            SDLNet_TCP_Close(listenSocket_);
+		}
+		listenSocket_ = 0;
 	}
 
 	bool Server::listen(int port) {
@@ -75,22 +106,29 @@ namespace net {
 	}
 
 	std::shared_ptr<Connection> Server::handleNewConnection() {
-		// New connection?
-		if (TCPsocket socket = SDLNet_TCP_Accept(listenSocket_)) {
-			if (IPaddress* remoteIP_ = SDLNet_TCP_GetPeerAddress(socket)) {
-				SDLNet_TCP_AddSocket(socketSet_, socket);
-				auto connection = std::make_shared<Connection>(buffer_);
-				clients_[socket] = connection;
-				return connection;
-			} else {
-				fprintf(stderr, "SDLNet_TCP_GetPeerAddress: %s\n", SDLNet_GetError());
-			}
+	    // The list of connections is not full?
+		if (clients_.size() < 8) {
+            // New connection?
+            if (TCPsocket socket = SDLNet_TCP_Accept(listenSocket_)) {
+                if (IPaddress* remoteIP_ = SDLNet_TCP_GetPeerAddress(socket)) {
+                    SDLNet_TCP_AddSocket(socketSet_, socket);
+                    auto connection = std::make_shared<Connection>(buffer_);
+                    clients_[socket] = connection;
+                    return connection;
+                } else {
+                    fprintf(stderr, "SDLNet_TCP_GetPeerAddress: %s\n", SDLNet_GetError());
+                }
+            }
 		}
 		return nullptr;
 	}
 
 	void Server::receiveData() {
-		while (SDLNet_CheckSockets(socketSet_, 0) > 0) {
+	    int iterations = 0; // A safe guard, in order to avoid getting
+	    // stuck in this function. Maybe unnecessary.
+
+		while (SDLNet_CheckSockets(socketSet_, 0) > 0 && iterations < 10) {
+            ++iterations;
 			for (auto& pair : clients_) {
 				TCPsocket socket = pair.first;
 				// Is ready to receive data?
@@ -99,6 +137,11 @@ namespace net {
 					int size = SDLNet_TCP_Recv(socket, data.data(), sizeof(data));
 					if (size > 0) {
 						buffer_.addToReceiveBuffer(data, size);
+					} else { // Assume that the client disconnected.
+                        SDLNet_TCP_DelSocket(socketSet_, pair.first);
+                        SDLNet_TCP_Close(pair.first); // Removed from set, then closed!
+					    clients_.erase(pair.first);
+					    break; // Due, iterator invalid!
 					}
 				}
 			}

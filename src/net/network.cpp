@@ -4,18 +4,15 @@
 #include "client.h"
 #include "connection.h"
 
-#include <array>
-
 namespace net {
 
 	bool Network::firstInstance = true;
 
-	Network::Network() : status_(NOT_ACTIVE), client_(0),
-        server_(0), mutex_(std::make_shared<std::mutex>()) {
+	Network::Network() : status_(NOT_ACTIVE),
+        client_(0), server_(0) {
 
 		if (firstInstance) {
 			firstInstance = false;
-			SDL_Init(SDL_INIT_NOPARACHUTE);
 			SDLNet_Init();
 		}
 	}
@@ -26,6 +23,7 @@ namespace net {
 
 	void Network::startServer(int port) {
 	    if (client_ == 0 && server_ == 0) {
+            mutex_ = std::make_shared<std::mutex>();
 			server_ = new Server(mutex_);
 			status_ = ACTIVE;
 			thread_ = std::thread(&Server::run, server_, port);
@@ -34,6 +32,7 @@ namespace net {
 
 	void Network::startClient(std::string serverIp, int port) {
 		if (client_ == 0 && server_ == 0) {
+            mutex_ = std::make_shared<std::mutex>();
 			client_ = new Client(mutex_);
 			status_ = ACTIVE;
 			thread_ = std::thread(&Client::run, client_, port, serverIp);
@@ -41,29 +40,46 @@ namespace net {
 	}
 
 	void Network::stop() {
-		mutex_->lock();
-		if (client_ != nullptr) {
-            client_->close();
-		}
-		if (server_ != nullptr) {
-            server_->close();
-		}
-		mutex_->unlock();
-		status_ = DISCONNECTING;
-		thread_.join();
-		delete client_;
-		delete server_;
-		client_ = 0;
-		server_ = 0;
-		status_ = NOT_ACTIVE;
-		thread_ = std::thread();
+	    // Has a active server/client?
+	    if (client_ != 0 || server_ || 0) {
+            if (client_ != 0) {
+                client_->close();
+            }
+            if (server_ != 0) {
+                server_->close();
+            }
+            status_ = DISCONNECTING;
+            thread_.join();
+            delete client_;
+            delete server_;
+            client_ = 0;
+            server_ = 0;
+            status_ = NOT_ACTIVE;
+	    }
 	}
 
-	std::shared_ptr<Connection> Network::pollNewConnections() {
+	void Network::setAcceptConnections(bool accept) {
+	    if (server_ != 0) {
+            server_->setAcceptConnections(accept);
+	    }
+	}
+
+	bool Network::isAcceptingConnections() const {
 	    if (client_ != 0) {
-            return client_->pollNewConnections();
-	    } else if (server_ != 0) {
-            return server_->pollNewConnections();
+            return true;
+	    }
+	    if (server_ != 0) {
+            return server_->isAcceptingConnections();
+	    }
+	    return true;
+	}
+
+	std::shared_ptr<Connection> Network::pollConnection() {
+	    if (client_ != 0) {
+            return client_->pollConnection();
+	    }
+	    if (server_ != 0) {
+            return server_->pollConnection();
 	    }
         return nullptr;
 	}

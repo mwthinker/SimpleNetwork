@@ -5,19 +5,19 @@
 
 #include <mutex>
 #include <vector>
-#include <array>
+#include <memory>
 
 namespace net {
 
 	class Buffer {
 	public:
-		Buffer(std::mutex& mutex);
+		Buffer(const std::shared_ptr<std::mutex>& mutex);
 
 		bool popReceiveBuffer(Packet& packet);
 
 		void addToSendBuffer(const Packet& packet);
 
-		
+
 		void addToReceiveBuffer(const std::array<char, 256>& data, int size);
 
 		int removeFromSendBufferTo(std::array<char, Packet::MAX_SIZE>& data);
@@ -25,7 +25,7 @@ namespace net {
 	private:
 		std::vector<char> receiveBuffer_;
 		std::vector<char> sendBuffer_;
-		std::mutex& mutex_;
+		std::shared_ptr<std::mutex> mutex_;
 		bool active_;
 	};
 
