@@ -49,6 +49,15 @@ namespace net {
 
         bool acceptConnection = true;
 		while (active) {
+			// Remove the latest closed clients.
+			for (auto it = clients_.begin(); it != clients_.end(); ++it) {
+				if (!it->second->isActive()) {
+					SDLNet_TCP_DelSocket(socketSet_, it->first);
+					SDLNet_TCP_Close(it->first);
+					it = clients_.erase(it);
+				}
+			}
+
             std::shared_ptr<Connection> connection;
             if (acceptConnection) {
                 connection = handleNewConnection();
@@ -68,7 +77,7 @@ namespace net {
 			acceptConnection = acceptConnection_;
 			mutex_->unlock();
 
-			if (!active && sleepMilliseconds_ > 0) {
+			if (!active && sleepMilliseconds_ >= 0) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(sleepMilliseconds_));
 			}
 		}
@@ -133,7 +142,7 @@ namespace net {
 			for (auto& pair : clients_) {
 				TCPsocket socket = pair.first;
 				// Is ready to receive data?
-				if (SDLNet_SocketReady(socket) != 0) {
+				if (SDLNet_SocketReady(socket) != 0 && pair.second->isActive()) {
 					std::array<char, 256> data;
 					int size = SDLNet_TCP_Recv(socket, data.data(), sizeof(data));
 					if (size > 0) {
@@ -154,9 +163,11 @@ namespace net {
 	void Server::sendData() {
 		for (auto& pair : clients_) {
 			std::array<char, Packet::MAX_SIZE> data;
-			int size = pair.second->buffer_.removeFromSendBufferTo(data);
-			if (size > 0) {
-				SDLNet_TCP_Send(pair.first, data.data(), size);
+			if (pair.second->isActive()) {
+				int size = pair.second->buffer_.removeFromSendBufferTo(data);
+				if (size > 0) {
+					SDLNet_TCP_Send(pair.first, data.data(), size);
+				}
 			}
 		}
 	}
