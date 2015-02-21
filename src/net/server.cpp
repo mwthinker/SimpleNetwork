@@ -5,8 +5,8 @@
 
 namespace net {
 
-	Server::Server(const std::shared_ptr<std::mutex>& mutex) : socketSet_(0), buffer_(mutex),
-        mutex_(mutex), active_(true), acceptConnection_(true) {
+	Server::Server(int sleepMilliseconds, const std::shared_ptr<std::mutex>& mutex) : socketSet_(0),
+		mutex_(mutex), sleepMilliseconds_(sleepMilliseconds), active_(true), acceptConnection_(true) {
 
 	}
 
@@ -68,8 +68,8 @@ namespace net {
 			acceptConnection = acceptConnection_;
 			mutex_->unlock();
 
-			if (!active) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			if (!active && sleepMilliseconds_ > 0) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(sleepMilliseconds_));
 			}
 		}
 
@@ -113,7 +113,7 @@ namespace net {
             if (TCPsocket socket = SDLNet_TCP_Accept(listenSocket_)) {
                 if (IPaddress* remoteIP_ = SDLNet_TCP_GetPeerAddress(socket)) {
                     SDLNet_TCP_AddSocket(socketSet_, socket);
-                    auto connection = std::make_shared<Connection>(buffer_);
+                    auto connection = std::make_shared<Connection>(mutex_);
                     clients_[socket] = connection;
                     return connection;
                 } else {
@@ -137,12 +137,13 @@ namespace net {
 					std::array<char, 256> data;
 					int size = SDLNet_TCP_Recv(socket, data.data(), sizeof(data));
 					if (size > 0) {
-						buffer_.addToReceiveBuffer(data, size);
+						pair.second->buffer_.addToReceiveBuffer(data, size);
 					} else { // Assume that the client disconnected.
-                        SDLNet_TCP_DelSocket(socketSet_, pair.first);
-                        SDLNet_TCP_Close(pair.first); // Removed from set, then closed!
-					    clients_.erase(pair.first);
+						SDLNet_TCP_DelSocket(socketSet_, socket);
+						SDLNet_TCP_Close(socket); // Removed from set, then closed!
 						pair.second->stop();
+						clients_.erase(socket); // Important to be called after ->stop(), 
+						// shared pointer may otherwise be invalid.
 					    break; // Due, iterator invalid!
 					}
 				}
@@ -153,7 +154,7 @@ namespace net {
 	void Server::sendData() {
 		for (auto& pair : clients_) {
 			std::array<char, Packet::MAX_SIZE> data;
-			int size = buffer_.removeFromSendBufferTo(data);
+			int size = pair.second->buffer_.removeFromSendBufferTo(data);
 			if (size > 0) {
 				SDLNet_TCP_Send(pair.first, data.data(), size);
 			}

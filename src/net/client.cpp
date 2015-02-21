@@ -1,13 +1,14 @@
 #include "client.h"
 #include "connection.h"
+#include "buffer.h"
 
 #include <thread>
 #include <iostream>
 
 namespace net {
 
-	Client::Client(const std::shared_ptr<std::mutex>& mutex) : socketSet_(0), buffer_(mutex),
-        mutex_(mutex) {
+	Client::Client(int sleepMilliseconds, const std::shared_ptr<std::mutex>& mutex) : socketSet_(0),
+		connection_(std::make_shared<Connection>(mutex)), mutex_(mutex), sleepMilliseconds_(sleepMilliseconds) {
 
 	}
 
@@ -21,7 +22,7 @@ namespace net {
 	}
 
     void Client::close() {
-		buffer_.setActive(false);
+		connection_->buffer_.setActive(false);
     }
 
 	void Client::run(int port, std::string ip) {
@@ -41,7 +42,6 @@ namespace net {
 			bool active = true;
 
 			mutex_->lock();
-			connection_ = std::make_shared<Connection>(buffer_);
 			newConnection_ = connection_;
 			mutex_->unlock();
 
@@ -52,9 +52,9 @@ namespace net {
 				// Send data to the server.
 				sendData();
 								
-				active = buffer_.isActive();
-				if (!active) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				active = connection_->buffer_.isActive();
+				if (!active && sleepMilliseconds_ > 0) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(sleepMilliseconds_));
 				}
 			}
 		}
@@ -75,7 +75,7 @@ namespace net {
 				std::array<char, 256> data;
 				int size = SDLNet_TCP_Recv(socket_, data.data(), sizeof(data));
 				if (size > 0) {
-					buffer_.addToReceiveBuffer(data, size);
+					connection_->buffer_.addToReceiveBuffer(data, size);
 				} else { // Assume that the client was disconnected.
                     SDLNet_TCP_DelSocket(socketSet_, socket_);
                     SDLNet_TCP_Close(socket_); // Removed from set, then closed!
@@ -90,7 +90,7 @@ namespace net {
 	void Client::sendData() {
 	    if (socket_ != 0) {
             std::array<char, Packet::MAX_SIZE> data;
-            int size = buffer_.removeFromSendBufferTo(data);
+			int size = connection_->buffer_.removeFromSendBufferTo(data);
             if (size > 0) {
                 SDLNet_TCP_Send(socket_, data.data(), size);
             }

@@ -15,7 +15,7 @@ namespace net {
 
 	class Client : public ConnectionsControl {
     public:
-        Client(const std::shared_ptr<std::mutex>& mutex);
+		Client(int sleepMilliseconds, const std::shared_ptr<std::mutex>& mutex);
 
         // Thread safe.
 		std::shared_ptr<Connection> pollConnection() override;
@@ -41,8 +41,10 @@ namespace net {
 
         IPaddress ip_;
         SDLNet_SocketSet socketSet_;
-        Buffer buffer_;
         TCPsocket socket_;
+		
+		int sleepMilliseconds_;
+
         std::shared_ptr<Connection> newConnection_;
         std::shared_ptr<Connection> connection_;
         std::shared_ptr<std::mutex> mutex_;

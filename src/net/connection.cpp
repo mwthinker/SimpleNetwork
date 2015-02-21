@@ -5,7 +5,7 @@
 
 namespace net {
 
-	Connection::Connection(Buffer& buffer) : buffer_(buffer) {
+	Connection::Connection(const std::shared_ptr<std::mutex>& mutex) : buffer_(mutex) {
 	}
 
 	bool Connection::receive(net::Packet& packet) {

@@ -2,9 +2,11 @@
 #define NET_CONNECTION_H
 
 #include "packet.h"
+#include "buffer.h"
 
 #include <memory>
 #include <vector>
+#include <mutex>
 
 namespace net {
 
@@ -15,7 +17,10 @@ namespace net {
 
 	class Connection {
 	public:
-		Connection(Buffer& network);
+		friend class Client;
+		friend class Server;
+
+		Connection(const std::shared_ptr<std::mutex>& mutex);
 
 		bool receive(net::Packet& packet);
 
@@ -28,7 +33,7 @@ namespace net {
 		int getId() const;
 
 	private:
-		Buffer& buffer_;
+		Buffer buffer_;
 	};
 
 } // Namespace net.

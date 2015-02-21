@@ -27,7 +27,7 @@ namespace net {
 	// to control a server/client system.
 	class Network {
 	public:
-		Network();
+		Network(int sleepMilliseconds = 0);
 		~Network();
 
 		Network(const Network&) = delete;
@@ -55,6 +55,7 @@ namespace net {
 
 		std::shared_ptr<std::mutex> mutex_;
 		std::thread thread_;
+		int sleepMilliseconds_;
 
 		Status status_;
 		static bool firstInstance;

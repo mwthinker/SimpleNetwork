@@ -9,8 +9,8 @@ namespace net {
 
 	bool Network::firstInstance = true;
 
-	Network::Network() : status_(NOT_ACTIVE),
-		connectionsControl_(0) {
+	Network::Network(int sleepMilliseconds) : status_(NOT_ACTIVE),
+		connectionsControl_(0), sleepMilliseconds_(sleepMilliseconds) {
 
 		if (firstInstance) {
 			firstInstance = false;
@@ -25,7 +25,7 @@ namespace net {
 	void Network::startServer(int port) {
 		if (connectionsControl_ == 0) {
             mutex_ = std::make_shared<std::mutex>();
-			auto server = new Server(mutex_);
+			auto server = new Server(sleepMilliseconds_, mutex_);
 			status_ = ACTIVE;
 			thread_ = std::thread(&Server::run, server, port);
 			connectionsControl_ = server;
@@ -35,7 +35,7 @@ namespace net {
 	void Network::startClient(std::string serverIp, int port) {
 		if (connectionsControl_ == 0) {
             mutex_ = std::make_shared<std::mutex>();
-			auto client = new Client(mutex_);
+			auto client = new Client(sleepMilliseconds_, mutex_);
 			status_ = ACTIVE;
 			thread_ = std::thread(&Client::run, client, port, serverIp);
 			connectionsControl_ = client;
@@ -75,6 +75,6 @@ namespace net {
 
 	Status Network::getStatus() const {
 		return status_;
-	}
+	}	
 
 } // Namespace net.

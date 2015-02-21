@@ -1,7 +1,6 @@
 #ifndef NET_SERVER_H
 #define NET_SERVER_H
 
-#include "buffer.h"
 #include "connection.h"
 #include "connectionscontrol.h"
 
@@ -20,7 +19,7 @@ namespace net {
 
     class Server : public ConnectionsControl {
     public:
-        Server(const std::shared_ptr<std::mutex>& mutex);
+		Server(int sleepMilliseconds, const std::shared_ptr<std::mutex>& mutex);
 
 		// Thread safe.
 		std::shared_ptr<Connection> pollConnection() override;
@@ -47,10 +46,11 @@ namespace net {
         SDLNet_SocketSet socketSet_;
         IPaddress ip_;
 
+		std::shared_ptr<std::mutex> mutex_;
         std::queue<std::shared_ptr<Connection>> newConnections_;
         std::map<TCPsocket, std::shared_ptr<Connection>> clients_;
-        Buffer buffer_;
-        std::shared_ptr<std::mutex> mutex_;
+
+		int sleepMilliseconds_;
         bool active_;
         bool acceptConnection_;
     };

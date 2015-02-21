@@ -36,7 +36,9 @@ namespace net {
 	private:
 		std::vector<char> receiveBuffer_;
 		std::vector<char> sendBuffer_;
+		
 		std::shared_ptr<std::mutex> mutex_;
+		
 		bool active_;
 		int id_;
 		static int lastId_;
