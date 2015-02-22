@@ -10,7 +10,8 @@ namespace net {
 	bool Network::firstInstance = true;
 
 	Network::Network(int sleepMilliseconds) : status_(NOT_ACTIVE),
-		connectionsControl_(0), sleepMilliseconds_(sleepMilliseconds) {
+		connectionsControl_(0), sleepMilliseconds_(sleepMilliseconds),
+		isServer_(false), isClient_(false) {
 
 		if (firstInstance) {
 			firstInstance = false;
@@ -29,6 +30,8 @@ namespace net {
 			status_ = ACTIVE;
 			thread_ = std::thread(&Server::run, server, port);
 			connectionsControl_ = server;
+			isServer_ = true;
+			isClient_ = false;
 		}
 	}
 
@@ -39,6 +42,8 @@ namespace net {
 			status_ = ACTIVE;
 			thread_ = std::thread(&Client::run, client, port, serverIp);
 			connectionsControl_ = client;
+			isServer_ = false;
+			isClient_ = true;
 		}
 	}
 
@@ -50,6 +55,8 @@ namespace net {
 			delete connectionsControl_;
 			connectionsControl_ = 0;
             status_ = NOT_ACTIVE;
+			isServer_ = false;
+			isClient_ = false;
 	    }
 	}
 

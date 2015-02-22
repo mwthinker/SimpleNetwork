@@ -50,6 +50,14 @@ namespace net {
 		// Return the current status for the network.
 		Status getStatus() const;
 
+		inline bool isServer() {
+			return isServer_;
+		}
+
+		inline bool isClient() {
+			return isClient_;
+		}
+
 	private:
 		ConnectionsControl* connectionsControl_;
 
@@ -58,6 +66,8 @@ namespace net {
 		int sleepMilliseconds_;
 
 		Status status_;
+		bool isServer_;
+		bool isClient_;
 		static bool firstInstance;
 	};
 
