@@ -1,5 +1,7 @@
 #include "buffer.h"
 
+#include <cassert>
+
 namespace net {
 
 	int Buffer::lastId_ = 0;
@@ -15,7 +17,7 @@ namespace net {
 			unsigned int size = receiveBuffer_[0];
 			if (receiveBuffer_.size() >= size) {
 				packet = net::Packet(receiveBuffer_.data(), size);
-				receiveBuffer_.erase(sendBuffer_.begin(), sendBuffer_.begin() + size);
+				receiveBuffer_.erase(receiveBuffer_.begin(), receiveBuffer_.begin() + size);
 				mutex_->unlock();
 				return true;
 			}
@@ -32,24 +34,24 @@ namespace net {
 
 	void Buffer::addToReceiveBuffer(char data) {
 		mutex_->lock();
-		receiveBuffer_.push_back(data);//insert(receiveBuffer_.end(), data.data(), data.data() + size);
+		receiveBuffer_.push_back(data);
 		mutex_->unlock();
 	}
 
-	int Buffer::removeFromSendBufferTo(std::array<char, Packet::MAX_SIZE>& data) {
+	bool Buffer::popSendBuffer(Packet& packet) {
 		mutex_->lock();
-		if (sendBuffer_.empty()) {
-			unsigned int size = sendBuffer_.size();
-			if (size > data.size()) {
-				size = data.size();
+		if (!sendBuffer_.empty()) {
+			unsigned int size = sendBuffer_[0];
+			assert(size <= Packet::MAX_SIZE);
+			if (sendBuffer_.size() >= size) {
+				packet = Packet(sendBuffer_.data(), size);
+				sendBuffer_.erase(sendBuffer_.begin(), sendBuffer_.begin() + size);
+				mutex_->unlock();
+				return true;
 			}
-			std::copy(sendBuffer_.begin(), sendBuffer_.begin() + size, data.data());
-			sendBuffer_.erase(sendBuffer_.begin(), sendBuffer_.end());
-			mutex_->unlock();
-			return size;
 		}
 		mutex_->unlock();
-		return 0;
+		return false;
 	}
 
 	bool Buffer::isActive() const {

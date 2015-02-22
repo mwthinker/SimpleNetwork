@@ -134,11 +134,7 @@ namespace net {
 	}
 
 	void Server::receiveData() {
-	    int iterations = 0; // A safe guard, in order to avoid getting
-	    // stuck in this function. Maybe unnecessary.
-
-		while (SDLNet_CheckSockets(socketSet_, 0) > 0 && iterations < 10) {
-            ++iterations;
+		while (SDLNet_CheckSockets(socketSet_, 0) > 0) {
 			for (auto& pair : clients_) {
 				TCPsocket socket = pair.first;
 				// Is ready to receive data?
@@ -164,11 +160,10 @@ namespace net {
 
 	void Server::sendData() {
 		for (auto& pair : clients_) {
-			std::array<char, Packet::MAX_SIZE> data;
 			if (pair.second->isActive()) {
-				int size = pair.second->buffer_.removeFromSendBufferTo(data);
-				if (size > 0) {
-					SDLNet_TCP_Send(pair.first, data.data(), size);
+				net::Packet packet;
+				if (pair.second->buffer_.popSendBuffer(packet)) {
+					SDLNet_TCP_Send(pair.first, packet.getData(), packet.getSize());
 				}
 			}
 		}

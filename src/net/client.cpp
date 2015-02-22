@@ -90,10 +90,9 @@ namespace net {
 
 	void Client::sendData() {
 		if (socket_ != 0 && connection_->isActive()) {
-            std::array<char, Packet::MAX_SIZE> data;
-			int size = connection_->buffer_.removeFromSendBufferTo(data);
-            if (size > 0) {
-                SDLNet_TCP_Send(socket_, data.data(), size);
+			net::Packet packet;
+			if (connection_->buffer_.popSendBuffer(packet)) {
+				SDLNet_TCP_Send(socket_, packet.getData(), packet.getSize());
             }
 	    }
 	}

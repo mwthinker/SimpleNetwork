@@ -23,8 +23,9 @@ namespace net {
 
 		void addToReceiveBuffer(char data);
 
-		int removeFromSendBufferTo(std::array<char, Packet::MAX_SIZE>& data);
+		bool popSendBuffer(Packet& packet);
 
+		
 		bool isActive() const;
 
 		void setActive(bool active);

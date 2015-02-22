@@ -136,8 +136,8 @@ void test2() {
 	std::cout << "test2, yes!" << std::endl;
 }
 
-void test3() {
-	std::cout << "test3, start!" << std::endl;
+void testPacket() {
+	std::cout << "testPacket, start!" << std::endl;
 	{
 		net::Packet packet;
 		assert(packet.getSize() == 1);
@@ -156,19 +156,19 @@ void test3() {
 		assert(packet[0] == packet.getSize() && packet[0] == 4 && packet[1] == 'a' && packet[2] == 'b' && packet[3] == 'c');
 	}
 	
-	std::cout << "test3, yes!" << std::endl;
+	std::cout << "testPacket, yes!" << std::endl;
 }
 
-void test4() {
+void test3() {
 
 }
 
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_NOPARACHUTE);
-	test3();
-	//test1();
+	testPacket();
+	test1();
 	test2();
-	test4();
+	test3();
 
 	std::cout << "All test succeeded!\n";
 	return 0;
