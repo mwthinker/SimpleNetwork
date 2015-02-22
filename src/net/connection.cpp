@@ -13,7 +13,7 @@ namespace net {
 	}
 
 	void Connection::send(const net::Packet& packet) {
-		if (packet.size() > 1) {
+		if (packet.getSize() > 1) {
 			buffer_.addToSendBuffer(packet);
 		}
 	}

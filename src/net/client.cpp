@@ -72,10 +72,11 @@ namespace net {
 		while (SDLNet_CheckSockets(socketSet_, 0) > 0) {
 			// Is ready to receive data?
 			if (SDLNet_SocketReady(socket_) != 0 && connection_->isActive()) {
-				std::array<char, 256> data;
-				int size = SDLNet_TCP_Recv(socket_, data.data(), sizeof(data));
+				//std::array<char, 256> data;
+				char data;
+				int size = SDLNet_TCP_Recv(socket_, &data, 1);
 				if (size > 0) {
-					connection_->buffer_.addToReceiveBuffer(data, size);
+					connection_->buffer_.addToReceiveBuffer(data);
 				} else { // Assume that the client was disconnected.
 					SDLNet_TCP_DelSocket(socketSet_, socket_);
 					SDLNet_TCP_Close(socket_); // Removed from set, then closed!

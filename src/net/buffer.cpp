@@ -26,13 +26,13 @@ namespace net {
 
 	void Buffer::addToSendBuffer(const Packet& packet) {
 		mutex_->lock();
-		sendBuffer_.insert(sendBuffer_.end(), packet.getData(), packet.getData() + packet.size());
+		sendBuffer_.insert(sendBuffer_.end(), packet.getData(), packet.getData() + packet.getSize());
 		mutex_->unlock();
 	}
 
-	void Buffer::addToReceiveBuffer(const std::array<char, 256>& data, int size) {
+	void Buffer::addToReceiveBuffer(char data) {
 		mutex_->lock();
-		receiveBuffer_.insert(receiveBuffer_.end(), data.data(), data.data() + size);
+		receiveBuffer_.push_back(data);//insert(receiveBuffer_.end(), data.data(), data.data() + size);
 		mutex_->unlock();
 	}
 

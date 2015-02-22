@@ -44,7 +44,7 @@ namespace net {
 		bool active = listen(port);
 
 		if (active) {
-			socketSet_ = SDLNet_AllocSocketSet(8);
+			socketSet_ = SDLNet_AllocSocketSet(MAX_CONNECTIONS);
 		}
 
         bool acceptConnection = true;
@@ -117,7 +117,7 @@ namespace net {
 
 	std::shared_ptr<Connection> Server::handleNewConnection() {
 	    // The list of connections is not full?
-		if (clients_.size() < 8) {
+		if (clients_.size() < MAX_CONNECTIONS) {
             // New connection?
             if (TCPsocket socket = SDLNet_TCP_Accept(listenSocket_)) {
                 if (IPaddress* remoteIP_ = SDLNet_TCP_GetPeerAddress(socket)) {
@@ -143,18 +143,20 @@ namespace net {
 				TCPsocket socket = pair.first;
 				// Is ready to receive data?
 				if (SDLNet_SocketReady(socket) != 0 && pair.second->isActive()) {
-					std::array<char, 256> data;
-					int size = SDLNet_TCP_Recv(socket, data.data(), sizeof(data));
+					//std::array<char, 2> data;
+					char data;
+					int size = SDLNet_TCP_Recv(socket, &data, 1);
 					if (size > 0) {
-						pair.second->buffer_.addToReceiveBuffer(data, size);
+						pair.second->buffer_.addToReceiveBuffer(data);
 					} else { // Assume that the client disconnected.
 						SDLNet_TCP_DelSocket(socketSet_, socket);
 						SDLNet_TCP_Close(socket); // Removed from set, then closed!
 						pair.second->stop();
 						clients_.erase(socket); // Important to be called after ->stop(), 
 						// shared pointer may otherwise be invalid.
-					    break; // Due, iterator invalid!
+					    break; // Iterator invalid!
 					}
+					break; // Socket found, abort searching after more activity.
 				}
 			}
 		}

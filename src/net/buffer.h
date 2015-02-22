@@ -21,7 +21,7 @@ namespace net {
 		void addToSendBuffer(const Packet& packet);
 
 
-		void addToReceiveBuffer(const std::array<char, 256>& data, int size);
+		void addToReceiveBuffer(char data);
 
 		int removeFromSendBufferTo(std::array<char, Packet::MAX_SIZE>& data);
 

@@ -6,27 +6,37 @@
 
 namespace net {
 
+	// The class Packet represent a holder of formatted data. No dynamic data, is used.
 	class Packet {
 	public:
-		static const size_t MAX_SIZE = 128;
+		static const int MAX_SIZE = 128;
 
-		inline Packet() : index_(0) {
+		// Creates an empty packet with size ONE.
+		// The one extra byte is used to store the size.
+		// E.g:
+		// Packet packet;
+		// std::cout << "Example, size of empty packet: " << packet.getSize() << "." << std::endl;
+		//
+		// Run the example:
+		// >> Example, size of empty packet: 1.
+		inline Packet() : index_(1) {
 			data_[0] = 1;
 		}
 
-		inline Packet(const char* data, int size) : index_(0) {
+		// Fill an empty packet with the data.
+		// The size will be: getSize() == size + 1.
+		// The one extra byte is used to store the size.
+		inline Packet(const char* data, int size) : index_(1) {
 			std::copy(data, data + size, data_.data());
 		}
 
 		inline Packet& operator>>(char& byte) {
 			byte = data_[index_++];
-			++data_[0];
 			return *this;
 		}
 
 		inline Packet& operator<<(char byte) {
-			push_back(byte);
-			++data_[0];
+			pushBack(byte);
 			return *this;
 		}
 
@@ -34,11 +44,11 @@ namespace net {
 			return data_.data();
 		}
 
-		inline int size() const {
+		inline int getSize() const {
 			return data_[0];
 		}
 
-		inline void push_back(char byte) {
+		inline void pushBack(char byte) {
 			data_[data_[0]++] = byte;
 		}
 
@@ -52,7 +62,7 @@ namespace net {
 
 	private:
 		std::array<char, MAX_SIZE> data_;
-		int index_;
+		int index_; // The index for the next byte to be read.
 	};
 
 } // Namespace net.

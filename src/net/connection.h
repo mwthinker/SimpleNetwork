@@ -10,6 +10,8 @@
 
 namespace net {
 
+	const unsigned int MAX_CONNECTIONS = 8;
+
 	class Connection;
 	typedef std::shared_ptr<Connection> ConnectionPtr;
 
