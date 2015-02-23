@@ -112,13 +112,11 @@ void test2() {
 	const std::string CLIENT_MESSAGE = "Hello, this is Client";
 	{
 		net::Packet packet;
-		std::string message = CLIENT_MESSAGE;
-		packet << message;
+		packet << CLIENT_MESSAGE;
 		c1->send(packet);
 	}
 	{
 		net::Packet packet;
-		std::string message = CLIENT_MESSAGE;
 		packet << CLIENT_MESSAGE;
 		c2->send(packet);
 	}
@@ -132,6 +130,48 @@ void test2() {
 		packet >> str;
 		assert(str == CLIENT_MESSAGE);
 	}
+	const std::string SERVER_MESSAGE = "Hello, this is Server";
+	{
+		net::Packet packet;
+		packet << SERVER_MESSAGE;
+		connections.front()->send(packet);
+		packet << '2';
+		connections.front()->send(packet);
+	}
+	{		
+		do {
+			net::Packet packet;
+			if (c1->receive(packet)) {
+				std::string str;
+				packet >> str;
+				assert(str == SERVER_MESSAGE);
+				break;
+			}
+		} while (true);
+		
+		do {
+			net::Packet packet;
+			if (c1->receive(packet)) {
+				std::string str;
+				packet >> str;
+				std::string message = SERVER_MESSAGE;
+				assert(str == message);
+				char a;
+				packet >> a;
+				assert(a == '2');
+				break;
+			}
+		} while (true);
+		
+	}
+	assert(server.isServer() && !server.isClient());
+	assert(!client1.isServer() && client1.isClient());
+	server.stop();
+	while (c1->isActive()) {
+	}
+	
+	//assert(client1.getStatus() == net::NOT_ACTIVE);
+	//assert(server.getStatus() == net::NOT_ACTIVE);
 
 	std::cout << "test2, yes!" << std::endl;
 }
