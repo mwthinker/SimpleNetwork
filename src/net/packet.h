@@ -59,6 +59,15 @@ namespace net {
 		inline unsigned int dataLeftToRead() const {
 			return data_[0] - index_;
 		}
+		
+		inline void reset() {
+			index_ = 1;
+		}
+
+		inline void clear() {
+			index_ = 1;
+			data_[0] = 1;
+		}
 
 	private:
 		std::array<char, MAX_SIZE> data_;
