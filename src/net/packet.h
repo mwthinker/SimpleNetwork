@@ -3,6 +3,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cassert>
 
 namespace net {
 
@@ -24,9 +25,10 @@ namespace net {
 		}
 
 		// Fill an empty packet with the data.
-		// The size will be: getSize() == size + 1.
-		// The one extra byte is used to store the size.
+		// The first byte must represent the size of the packet.
 		inline Packet(const char* data, int size) : index_(1) {
+			assert(size > 0 &&  size <= Packet::MAX_SIZE);
+			assert(data[0] == size);
 			std::copy(data, data + size, data_.data());
 		}
 
@@ -50,6 +52,10 @@ namespace net {
 
 		inline void pushBack(char byte) {
 			data_[data_[0]++] = byte;
+		}
+
+		inline char& operator[](int index) {
+			return data_[index];
 		}
 
 		inline char operator[](int index) const {
