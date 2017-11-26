@@ -21,11 +21,11 @@ namespace net {
 		std::shared_ptr<Connection> pollConnection() override;
 
 		// Thread safe.
-		inline void setAcceptConnections(bool accept) override {
+		void setAcceptConnections(bool accept) override {
 		}
 
 		// Thread safe.
-		inline bool isAcceptingConnections() const override {
+		bool isAcceptingConnections() const override {
 			return true;
 		}
 
@@ -43,7 +43,7 @@ namespace net {
         SDLNet_SocketSet socketSet_;
         TCPsocket socket_;
 		
-		int sleepMilliseconds_;
+		std::chrono::milliseconds sleepTime_;
 
         std::shared_ptr<Connection> newConnection_;
         std::shared_ptr<Connection> connection_;

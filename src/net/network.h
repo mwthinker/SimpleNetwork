@@ -75,13 +75,13 @@ namespace net {
 
 		/// Give the information if the network is an active server.
 		/// @return True if the network is an active server else false.
-		inline bool isServer() {
+		bool isServer() {
 			return isServer_;
 		}
 
 		/// Give the information if the network is an active client.
 		/// @return True if the network is an active client else false.
-		inline bool isClient() {
+		bool isClient() {
 			return isClient_;
 		}
 

@@ -50,7 +50,7 @@ namespace net {
         std::queue<std::shared_ptr<Connection>> newConnections_;
         std::map<TCPsocket, std::shared_ptr<Connection>> clients_;
 
-		int sleepMilliseconds_;
+		std::chrono::milliseconds sleepTime_;
         bool active_;
         bool acceptConnection_;
     };

@@ -30,7 +30,7 @@ namespace net {
 
 		void setActive(bool active);
 
-		inline int getId() const {
+		int getId() const {
 			return id_;
 		}
 

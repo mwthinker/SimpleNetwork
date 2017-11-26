@@ -6,7 +6,7 @@
 namespace net {
 
 	Server::Server(int sleepMilliseconds, const std::shared_ptr<std::mutex>& mutex) : socketSet_(0),
-		mutex_(mutex), sleepMilliseconds_(sleepMilliseconds), active_(true), acceptConnection_(true) {
+		mutex_(mutex), sleepTime_(sleepMilliseconds), active_(true), acceptConnection_(true) {
 
 	}
 
@@ -68,7 +68,7 @@ namespace net {
 
 			// Send data to sockets.
 			sendData();
-
+			
 			mutex_->lock();
 			if (connection) {
                 newConnections_.push(connection);
@@ -77,9 +77,7 @@ namespace net {
 			acceptConnection = acceptConnection_;
 			mutex_->unlock();
 
-			if (!active && sleepMilliseconds_ >= 0) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(sleepMilliseconds_));
-			}
+			std::this_thread::sleep_for(sleepTime_);
 		}
 
 		for (auto& pair : clients_) {

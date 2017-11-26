@@ -137,6 +137,7 @@ void test2() {
 		connections.front()->send(packet);
 		packet << '2';
 		connections.front()->send(packet);
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 	{		
 		do {
@@ -199,16 +200,13 @@ void testPacket() {
 	std::cout << "testPacket, yes!" << std::endl;
 }
 
-void test3() {
-
-}
-
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_NOPARACHUTE);
+	
 	testPacket();
+	
 	test1();
 	test2();
-	test3();
 
 	std::cout << "All test succeeded!\n";
 	return 0;

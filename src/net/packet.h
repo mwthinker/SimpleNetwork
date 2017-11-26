@@ -20,24 +20,24 @@ namespace net {
 		//
 		// Run the example:
 		// >> Example, size of empty packet: 1.
-		inline Packet() : index_(1) {
+		Packet() : index_(1) {
 			data_[0] = 1;
 		}
 
 		// Fill an empty packet with the data.
 		// The first byte must represent the size of the packet.
-		inline Packet(const char* data, int size) : index_(1) {
+		Packet(const char* data, int size) : index_(1) {
 			assert(size > 0 &&  size <= Packet::MAX_SIZE);
 			assert(data[0] == size);
 			std::copy(data, data + size, data_.data());
 		}
 
-		inline Packet& operator>>(char& byte) {
+		Packet& operator>>(char& byte) {
 			byte = data_[index_++];
 			return *this;
 		}
 
-		inline Packet& operator<<(char byte) {
+		Packet& operator<<(char byte) {
 			pushBack(byte);
 			return *this;
 		}
@@ -46,31 +46,31 @@ namespace net {
 			return data_.data();
 		}
 
-		inline int getSize() const {
+		int getSize() const {
 			return data_[0];
 		}
 
-		inline void pushBack(char byte) {
+		void pushBack(char byte) {
 			data_[data_[0]++] = byte;
 		}
 
-		inline char& operator[](int index) {
+		char& operator[](int index) {
 			return data_[index];
 		}
 
-		inline char operator[](int index) const {
+		char operator[](int index) const {
 			return data_[index];
 		}
 
-		inline unsigned int dataLeftToRead() const {
+		unsigned int dataLeftToRead() const {
 			return data_[0] - index_;
 		}
 		
-		inline void reset() {
+		void reset() {
 			index_ = 1;
 		}
 
-		inline void clear() {
+		void clear() {
 			index_ = 1;
 			data_[0] = 1;
 		}

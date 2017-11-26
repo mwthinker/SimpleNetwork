@@ -9,8 +9,7 @@ namespace net {
 
     class ConnectionsControl {
     public:
-		virtual ~ConnectionsControl() {
-		}
+		virtual ~ConnectionsControl() = default;
 
 		// Thread safe.
 		virtual std::shared_ptr<Connection> pollConnection() = 0;
